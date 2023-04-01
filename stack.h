@@ -62,6 +62,6 @@ element peek(StackType* s)
 	}
 	else return s->data[s->top];
 }
-// ===== 스택 코드의 끝 =====
+// ===== 스택 코드의 끝 ===== 
 
 #endif
