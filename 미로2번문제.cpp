@@ -8,14 +8,22 @@
 #include "stack.h"
 #define MAX_SIZE 10
 
-element here = { 1,0 };
-element entry = { 1,0 };
+void SetPoint() {
+	element here = { 1,0 };
+	element entry = { 1,0 };
+}
+
 
 
 void PrtMaze(char maze[MAX_SIZE][MAX_SIZE]) {
 	for (int i = 0; i < 10; i++) {
 		for (int j = 0; j < 10; j++) {
-			printf("%c ", maze[i][j]);
+			if (i == 0 || i == 9) {
+				printf("%c-", maze[i][j]);
+			}
+			else {
+				printf("%c ", maze[i][j]);
+			}
 		}
 		printf("\n");
 	}
@@ -48,10 +56,10 @@ int Check_Ready() {//게임준비작업, 룰설명
 //벽면은 1로 초기화 나머지 안쪽은 랜덤성 0,1부여
 void RanMaze(char maze[MAX_SIZE][MAX_SIZE]) {
 	for (int i = 0; i < 10; i++) {
-		maze[i][0] = '1';
-		maze[0][i] = '1';
-		maze[i][9] = '1';
-		maze[9][i] = '1';
+		maze[i][0] = '|';
+		maze[0][i] = '-';
+		maze[i][9] = '|';
+		maze[9][i] = '-';
 	}
 
 	for (int i = 1; i < 9; i++) {
@@ -72,32 +80,30 @@ void RanMaze(char maze[MAX_SIZE][MAX_SIZE]) {
 }
 
 int main() {
+	int score = 0;
+	int count = 0;
+	element here{ 1,0 };
+	element entry{ 1,0 };
 	if (Check_Ready()) {
 	reset:
+		SetPoint();
 		srand((unsigned)time(NULL));
-		int r, c, count = 0;
-		int key1, key2, score = 0;
+		int r, c;
+		int key1, key2;
 		char maze[MAX_SIZE][MAX_SIZE];
 		RanMaze(maze);
-		//scanf_s("%d", &r);
 		StackType s;
 		init_stack(&s);
 
 		maze[9][8] = 'x';
 		maze[1][0] = 'e';
 		while (maze[here.r][here.c] != 'x') {
-			/*
-			if (maze[here.r][here.c] == 1) {
-				printf("실패\n");
-				return 0;
-			}*/
-
 			maze[here.r][here.c] = '.';
 			//미로출력, 2차배열로 출력 함수
-			printf("0 : 길, 1 : 벽\n"); //길, 벽 설명
+			printf("0 : 길, 1 : 장애물\n"); //길, 벽 설명
 			PrtMaze(maze);
 
-			printf("점수 : %d    ", score);
+			printf("점수 : %d    ", 100 -score);
 			printf("풀 수 없는 미로라면 r 또는 R을 입력\n\n");
 
 			key1 = _getch();
@@ -110,15 +116,27 @@ int main() {
 			if (key1 == 224) {
 				switch (key2) {
 				case 72://상
-					if (maze[here.r - 1][here.c] != '1' && maze[here.r - 1][here.c] != '.') {
-						//push_loc(&s, --here.r, here.c);
+					if (maze[here.r - 1][here.c] == '0' ) {
+						push_loc(&s, --here.r, here.c);
 						count++;
 						score++;
+					}
+					else if (maze[here.r - 1][here.c] == '.') {
+						push_loc(&s, --here.r, here.c);
+						count++;
 					}
 					else if (maze[here.r - 1][here.c] == '1') {
 						printf("막혀있습니다.\n");
 						Sleep(1000);
 						system("cls");
+						continue;
+					}
+					else if (maze[here.r - 1][here.c] == 'B') {
+						printf("폭탄을 밟았습니다! 3점 차감!\n");
+						Sleep(1000);
+						system("cls");
+						count++;
+						score += 3;
 						continue;
 					}
 				case 80://하
@@ -174,7 +192,7 @@ int main() {
 	exit:
 		printf("%d번을 움직여서 탈출\n", count);
 		printf("최단거리 : %d\n", s.top + 2);
-		printf("점수 : %d", score);
+		printf("점수 : %d", 100 - score);
 	}
 }
 
