@@ -95,7 +95,7 @@ int main() {
 		StackType s;
 		init_stack(&s);
 
-		maze[9][8] = 'x';
+		maze[9][8] = 'x';  
 		maze[1][0] = 'e';
 		while (maze[here.r][here.c] != 'x') {
 			maze[here.r][here.c] = '.';
@@ -117,12 +117,14 @@ int main() {
 				switch (key2) {
 				case 72://상
 					if (maze[here.r - 1][here.c] == '0' ) {
-						push_loc(&s, --here.r, here.c);
+						//push_loc(&s, --here.r, here.c);
+						--here.r;
 						count++;
 						score++;
 					}
 					else if (maze[here.r - 1][here.c] == '.') {
-						push_loc(&s, --here.r, here.c);
+						//push_loc(&s, --here.r, here.c);
+						--here.r;
 						count++;
 					}
 					else if (maze[here.r - 1][here.c] == '1') {
@@ -140,23 +142,42 @@ int main() {
 						continue;
 					}
 				case 80://하
-					if (maze[here.r + 1][here.c] == '1') {
+					if (maze[here.r + 1][here.c] == '0') {
+						//push_loc(&s, ++here.r, here.c);
+						++here.r;
+						count++;
+						score++;
+					}
+					else if (maze[here.r + 1][here.c] == '.') {
+						//push_loc(&s, ++here.r, here.c);
+						++here.r;
+						count++;
+					}
+					else if (maze[here.r + 1][here.c] == '1') {
 						printf("막혀있습니다.\n");
 						Sleep(1000);
 						system("cls");
 						continue;
 					}
-					else if (maze[here.r + 1][here.c] != '1' && maze[here.r + 1][here.c] != '.') {
-						push_loc(&s, ++here.r, here.c);
+					else if (maze[here.r + 1][here.c] == 'B') {
+						printf("폭탄을 밟았습니다! 3점 차감!\n");
+						Sleep(1000);
+						system("cls");
+						count++;
+						score += 3;
+						continue;
+					}
+				case 75://좌
+					if (maze[here.r][here.c - 1] == '0') {
+						//push_loc(&s, here.r, --here.c);
+						--here.c;
 						count++;
 						score++;
 					}
-
-				case 75://좌
-					if (maze[here.r][here.c - 1] != '1' && maze[here.r][here.c - 1] != '.') {
-						push_loc(&s, here.r, --here.c);
+					else if (maze[here.r][here.c - 1] == '.') {
+						//push_loc(&s, here.r, --here.c);
+						--here.c;
 						count++;
-						score++;
 					}
 					else if (maze[here.r][here.c - 1] == '1') {
 						printf("막혀있습니다.\n");
@@ -164,16 +185,38 @@ int main() {
 						system("cls");
 						continue;
 					}
+					else if (maze[here.r][here.c - 1] == 'B') {
+						printf("폭탄을 밟았습니다! 3점 차감!\n");
+						Sleep(1000);
+						system("cls");
+						count++;
+						score += 3;
+						continue;
+					}
 				case 77://우
-					if (maze[here.r][here.c + 1] != '1' && maze[here.r][here.c + 1] != '.') {
-						push_loc(&s, here.r, ++here.c);
+					if (maze[here.r][here.c + 1] == '0') {
+						//push_loc(&s, here.r, ++here.c);
+						++here.c;
 						count++;
 						score++;
+					}
+					else if (maze[here.r][here.c + 1] == '.') {
+						//push_loc(&s, here.r, ++here.c);
+						++here.c;
+						count++;
 					}
 					else if (maze[here.r][here.c + 1] == '1') {
 						printf("막혀있습니다.\n");
 						Sleep(1000);
 						system("cls");
+						continue;
+					}
+					else if (maze[here.r][here.c + 1] == 'B') {
+						printf("폭탄을 밟았습니다! 3점 차감!\n");
+						Sleep(1000);
+						system("cls");
+						count++;
+						score += 3;
 						continue;
 					}
 				}
@@ -197,8 +240,6 @@ int main() {
 }
 
 //위, 아래를 움직일 때 막혀있습니다 프린트 오류
-//폭탄 밟을때 -3점 추가
 //cls 최적화
 //한번씩 방향키 입력시 실패 출력 문제
 //UI 예쁘게
-//점수 = 100 - 움직인거리
