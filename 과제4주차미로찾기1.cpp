@@ -28,8 +28,8 @@ void RanMaze(char maze[MAX_SIZE][MAX_SIZE]) {
 
 	for (int i = 1; i < 9; i++) {
 		for (int j = 1; j < 9; j++) {
-			//약 70프로 확률로 1부여
-			if (rand() % 100 >= 70) {
+			//약 20프로 확률로 1부여
+			if (rand() % 100 >= 80) {
 				maze[i][j] = '1';
 			}
 			else {
