@@ -1,4 +1,3 @@
-//미로를 랜덤으로 생성하기
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <time.h>
@@ -8,12 +7,97 @@
 #include "stack.h"
 #define MAX_SIZE 10
 
-void SetPoint() {
+typedef struct {
+	int score;
+	int count;
+	element NowPos;
+	char maze[MAX_SIZE][MAX_SIZE];
+}GameData;
+
+int CheckMaze(char maz[MAX_SIZE][MAX_SIZE]) {
 	element here = { 1,0 };
-	element entry = { 1,0 };
+	int count = 0;
+	StackType s;
+	init_stack(&s);
+	char maze[MAX_SIZE][MAX_SIZE];
+
+	for (int i = 0; i < 10; i++) {
+		for (int j = 0; j < 10; j++) {
+			maze[i][j] = maz[i][j];
+		}
+	}
+
+	while (maze[here.r][here.c] != 'x') {
+		if (maze[here.r][here.c] == 1) {
+			return 0;
+		}
+		maze[here.r][here.c] = '.';
+		//미로의 전후좌우 조사
+		//우
+		if (maze[here.r + 1][here.c] != '1' && maze[here.r + 1][here.c] != '.' && maze[here.r + 1][here.c] != '|' && maze[here.r + 1][here.c] != '-') {
+			push_loc(&s, ++here.r, here.c);
+			count++;
+		}
+		//하
+		else if (maze[here.r][here.c + 1] != '1' && maze[here.r][here.c + 1] != '.' && maze[here.r][here.c] != '|' && maze[here.r][here.c + 1] != '-') {
+			push_loc(&s, here.r, ++here.c);
+			count++;
+		}
+		//좌
+		else if (maze[here.r - 1][here.c] != '1' && maze[here.r - 1][here.c] != '.' && maze[here.r - 1][here.c] != '|' && maze[here.r - 1][here.c] != '-') {
+			push_loc(&s, --here.r, here.c);
+			count++;
+		}
+		//상
+		else if (maze[here.r][here.c - 1] != '1' && maze[here.r][here.c - 1] != '.' && maze[here.r][here.c - 1] != '|' && maze[here.r][here.c - 1] != '-') {
+			push_loc(&s, here.r, --here.c);
+			count++;
+		}
+
+		else if (is_empty(&s)) {
+			return 0;
+		}
+		else {
+			here = pop(&s);
+			count++;
+		}
+	}
+	return 1; //미로 검사 통과!
 }
 
+void RanMaze(char maze[MAX_SIZE][MAX_SIZE], int k) {
+	for (int i = 0; i < 10; i++) {
+		maze[i][0] = '|';
+		maze[i][9] = '|';
+		maze[0][i] = '-';
+		maze[9][i] = '-';
+	}
+	maze[9][0] = '-';
+reset:
+	for (int i = 1; i < 9; i++) {
+		for (int j = 1; j < 9; j++) {
+			//k=3 어려움 난이도시 벽이 생성률 70%
+			//k=2 보통 난이도시 벽 생성률 50%
+			//k=1 쉬움 난이도시 벽 생성률 30%
+			if (rand() % 100 >= 30 + (k - 3) * -20) {
+				maze[i][j] = '1';
+			}
+			else if (rand() % 100 < 10) {
+				//약 10프로 확률로 폭탄부여
+				maze[i][j] = 'B';
+			}
+			else {
+				maze[i][j] = '0';
+			}
 
+		}
+	}
+	maze[9][8] = 'x';
+	maze[1][0] = 'E';
+	if (CheckMaze(maze) == 0) {
+		goto reset;
+	}
+}
 
 void PrtMaze(char maze[MAX_SIZE][MAX_SIZE]) {
 	for (int i = 0; i < 10; i++) {
@@ -31,20 +115,26 @@ void PrtMaze(char maze[MAX_SIZE][MAX_SIZE]) {
 
 int Check_Ready() {//게임준비작업, 룰설명
 	int n;
+	int k;
 	printf("게임을 플레이 하실 준비가 되셨다면 1을 입력해주세요 : ");
 	scanf("%d", &n);
 	if (n == 1) {
 		printf("게임을 시작합니다!\n");
+		printf("--------Game Rule--------\n");
 		printf("움직일때마다 1점, 폭탄을 밟으면 -3점입니다.\n");
 		printf("왔던길을 되돌아가는 행동에는 점수가 증가되지 않습니다!\n");
+		printf("게임난이도를 설정해주세요!\n");
+		printf("1단계: (낮음) | 2단계: (보통) | 3단계: (높음)\n");
+		scanf("%d", &k);
+		printf("-------------------------\n");
 		printf("10초후 게임이 시작됩니다!\n");
 		Sleep(10);
 		for (int i = 10; i > 0; i--) {
 			printf("%d ", i);
-			
+			Sleep(1000);
 		}
 		system("cls");
-		return 1;
+		return k;
 	}
 	else {
 		printf("플레이할 준비를 마치시면 다시 실행해주세요!");
@@ -53,193 +143,112 @@ int Check_Ready() {//게임준비작업, 룰설명
 	}
 }
 
-//벽면은 1로 초기화 나머지 안쪽은 랜덤성 0,1부여
-void RanMaze(char maze[MAX_SIZE][MAX_SIZE]) {
-	for (int i = 0; i < 10; i++) {
-		maze[i][0] = '|';
-		maze[0][i] = '-';
-		maze[i][9] = '|';
-		maze[9][i] = '-';
+void up(GameData& gd) {
+	if (gd.maze[gd.NowPos.r - 1][gd.NowPos.c] == '1' || gd.maze[gd.NowPos.r - 1][gd.NowPos.c] == '|' || gd.maze[gd.NowPos.r - 1][gd.NowPos.c] == '-') {//막히면?
+		printf("막혀있습니다.\n");
+		return;
 	}
+	if (gd.maze[gd.NowPos.r - 1][gd.NowPos.c] == 'B') {//폭탄이면?
+		printf("폭탄을 밟았습니다! 3점 차감!\n");
+		gd.score -= 3;
+	}
+	gd.maze[gd.NowPos.r][gd.NowPos.c] = '0';
+	gd.count++;
+	gd.NowPos.r--;
+	gd.score--;
+}
 
-	for (int i = 1; i < 9; i++) {
-		for (int j = 1; j < 9; j++) {
-			//약 70프로 확률로 1부여
-			if (rand() % 100 >= 70) {
-				maze[i][j] = '1';
-			}
-			else if (rand()% 100< 10) {
-				//약 10프로 확률로 폭탄부여
-				maze[i][j] = 'B'; 
-			}
-			else {
-				maze[i][j] = '0';
-			}
-		}
+void down(GameData& gd) {
+	if (gd.maze[gd.NowPos.r + 1][gd.NowPos.c] == '1' || gd.maze[gd.NowPos.r + 1][gd.NowPos.c] == '|' || gd.maze[gd.NowPos.r + 1][gd.NowPos.c] == '-') {//막히면?
+		printf("막혀있습니다.\n");
+		return;
 	}
+	if (gd.maze[gd.NowPos.r + 1][gd.NowPos.c] == 'B') {//폭탄이면?
+		printf("폭탄을 밟았습니다! 3점 차감!\n");
+		gd.score -= 3;
+	}
+	gd.maze[gd.NowPos.r][gd.NowPos.c] = '0';
+	gd.count++;
+	gd.NowPos.r++;
+	gd.score--;
+}
+
+void left(GameData& gd) {
+	if (gd.maze[gd.NowPos.r][gd.NowPos.c - 1] == '1' || gd.maze[gd.NowPos.r][gd.NowPos.c - 1] == '|' || gd.maze[gd.NowPos.r][gd.NowPos.c - 1] == '-') {//막히면?
+		printf("막혀있습니다.\n");
+		return;
+	}
+	if (gd.maze[gd.NowPos.r][gd.NowPos.c - 1] == 'B') {//폭탄이면?
+		printf("폭탄을 밟았습니다! 3점 차감!\n");
+		gd.score -= 3;
+	}
+	gd.maze[gd.NowPos.r][gd.NowPos.c] = '0';
+	gd.count++;
+	gd.NowPos.c--;
+	gd.score--;
+}
+
+void right(GameData& gd) {
+	if (gd.maze[gd.NowPos.r][gd.NowPos.c + 1] == '1' || gd.maze[gd.NowPos.r][gd.NowPos.c + 1] == '|' || gd.maze[gd.NowPos.r][gd.NowPos.c + 1] == '-') {//막히면?
+		printf("막혀있습니다.\n");
+		return;
+	}
+	if (gd.maze[gd.NowPos.r][gd.NowPos.c + 1] == 'B') {//폭탄이면?
+		printf("폭탄을 밟았습니다! 3점 차감!\n");
+		gd.score -= 3;
+	}
+	gd.maze[gd.NowPos.r][gd.NowPos.c] = '0';
+	gd.count++;
+	gd.NowPos.c++;
+	gd.score--;
 }
 
 int main() {
-	int score = 0;
-	int count = 0;
-	element here{ 1,0 };
-	element entry{ 1,0 };
-	if (Check_Ready()) {
-	reset:
-		SetPoint();
-		srand((unsigned)time(NULL));
-		int r, c;
-		int key1, key2;
-		char maze[MAX_SIZE][MAX_SIZE];
-		RanMaze(maze);
-		StackType s;
-		init_stack(&s);
+	srand((unsigned)time(NULL));
+	element Destination;
+	Destination = { 9, 8 };
+	GameData GD;
+	int k;
 
-		maze[9][8] = 'x';  
-		maze[1][0] = 'e';
-		while (maze[here.r][here.c] != 'x') {
-			maze[here.r][here.c] = '.';
-			//미로출력, 2차배열로 출력 함수
-			printf("0 : 길, 1 : 장애물\n"); //길, 벽 설명
-			PrtMaze(maze);
-
-			printf("점수 : %d    ", 100 -score);
-			printf("풀 수 없는 미로라면 r 또는 R을 입력\n\n");
-
-			key1 = _getch();
-			if (key1 == 'r' || key1 == 'R') {
-				goto reset;
+	if (k = Check_Ready()) {
+		GD.NowPos = { 1,0 };
+		system("cls");
+		RanMaze(GD.maze, k);
+		GD.score = 100;
+		GD.count = 0;
+		while (GD.NowPos.r != 9 || GD.NowPos.c != 8) {//NowPos가 Destination에 도달하지 않았다면 반복.
+			GD.maze[GD.NowPos.r][GD.NowPos.c] = '.';
+			PrtMaze(GD.maze);
+			//점수랑 지나온 거리 결과 출력
+			if (GD.score <= 0) {
+				printf("탈락!");
+				break;
 			}
+			printf("점수 : %d    움직인 횟수 : %d\n", GD.score, GD.count);
+			//한번씩 방향키 입력받기
+			int key1, key2;
+			key1 = _getch();
 			key2 = _getch();
-
-			//방향키 입력받아서 움직이기
+			system("cls");
 			if (key1 == 224) {
 				switch (key2) {
 				case 72://상
-					if (maze[here.r - 1][here.c] == '0' ) {
-						//push_loc(&s, --here.r, here.c);
-						--here.r;
-						count++;
-						score++;
-					}
-					else if (maze[here.r - 1][here.c] == '.') {
-						//push_loc(&s, --here.r, here.c);
-						--here.r;
-						count++;
-					}
-					else if (maze[here.r - 1][here.c] == '1') {
-						printf("막혀있습니다.\n");
-						Sleep(1000);
-						system("cls");
-						continue;
-					}
-					else if (maze[here.r - 1][here.c] == 'B') {
-						printf("폭탄을 밟았습니다! 3점 차감!\n");
-						Sleep(1000);
-						system("cls");
-						count++;
-						score += 3;
-						continue;
-					}
+					up(GD);
+					break;
 				case 80://하
-					if (maze[here.r + 1][here.c] == '0') {
-						//push_loc(&s, ++here.r, here.c);
-						++here.r;
-						count++;
-						score++;
-					}
-					else if (maze[here.r + 1][here.c] == '.') {
-						//push_loc(&s, ++here.r, here.c);
-						++here.r;
-						count++;
-					}
-					else if (maze[here.r + 1][here.c] == '1') {
-						printf("막혀있습니다.\n");
-						Sleep(1000);
-						system("cls");
-						continue;
-					}
-					else if (maze[here.r + 1][here.c] == 'B') {
-						printf("폭탄을 밟았습니다! 3점 차감!\n");
-						Sleep(1000);
-						system("cls");
-						count++;
-						score += 3;
-						continue;
-					}
+					down(GD);
+					break;
 				case 75://좌
-					if (maze[here.r][here.c - 1] == '0') {
-						//push_loc(&s, here.r, --here.c);
-						--here.c;
-						count++;
-						score++;
-					}
-					else if (maze[here.r][here.c - 1] == '.') {
-						//push_loc(&s, here.r, --here.c);
-						--here.c;
-						count++;
-					}
-					else if (maze[here.r][here.c - 1] == '1') {
-						printf("막혀있습니다.\n");
-						Sleep(1000);
-						system("cls");
-						continue;
-					}
-					else if (maze[here.r][here.c - 1] == 'B') {
-						printf("폭탄을 밟았습니다! 3점 차감!\n");
-						Sleep(1000);
-						system("cls");
-						count++;
-						score += 3;
-						continue;
-					}
+					left(GD);
+					break;
 				case 77://우
-					if (maze[here.r][here.c + 1] == '0') {
-						//push_loc(&s, here.r, ++here.c);
-						++here.c;
-						count++;
-						score++;
-					}
-					else if (maze[here.r][here.c + 1] == '.') {
-						//push_loc(&s, here.r, ++here.c);
-						++here.c;
-						count++;
-					}
-					else if (maze[here.r][here.c + 1] == '1') {
-						printf("막혀있습니다.\n");
-						Sleep(1000);
-						system("cls");
-						continue;
-					}
-					else if (maze[here.r][here.c + 1] == 'B') {
-						printf("폭탄을 밟았습니다! 3점 차감!\n");
-						Sleep(1000);
-						system("cls");
-						count++;
-						score += 3;
-						continue;
-					}
+					right(GD);
+					break;
 				}
 			}
-			else if (is_empty(&s)) {
-				printf("실패\n");
-				return 0;
-			}
-			else {
-				here = pop(&s);
-				count++;
-			}
-
-			system("cls");
 		}
-	exit:
-		printf("%d번을 움직여서 탈출\n", count);
-		printf("최단거리 : %d\n", s.top + 2);
-		printf("점수 : %d", 100 - score);
+		PrtMaze(GD.maze);
+		printf("축하합니다! 클리어 했어요!\n");
+		printf("당신의 점수 : %d    총 움직인 횟수 : %d\n", GD.score, GD.count);
 	}
 }
-
-//위, 아래를 움직일 때 막혀있습니다 프린트 오류
-//cls 최적화
-//한번씩 방향키 입력시 실패 출력 문제
-//UI 예쁘게
