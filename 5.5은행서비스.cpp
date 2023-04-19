@@ -6,7 +6,7 @@
 
 int main() {
 	QueueType queue;
-	int sec = 60; //교재에서는 min으로 함.
+	int sec = 10; //교재에서는 min으로 함.
 	int total_wait = 0;
 	int service_time = 0;
 	int service_customer;
